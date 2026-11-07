@@ -1,0 +1,5 @@
+{
+  "name": "arena-de-acero-checks", "private": true, "type": "module",
+  "scripts": { "test:e2e": "playwright test", "test:network": "node --test scripts/network.test.mjs" },
+  "devDependencies": { "@playwright/test": "^1.56.0" }
+}

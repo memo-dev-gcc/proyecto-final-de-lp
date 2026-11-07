@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#161a21"><meta name="description" content="Cuatro pilotos. Una arena. Combate vehicular multijugador en tiempo real.">
+<title>Arena de acero · Combate vehicular</title>
+<link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="/estilos.css">
+<script type="module" src="/juego.js"></script>
+</head>
+<body>
+<div class="game-shell">
+<header class="topbar">
+  <a class="brand" href="/" aria-label="Arena de acero, inicio"><span class="brand-mark" aria-hidden="true">≋</span><span>ARENA <small>DE</small> ACERO</span></a>
+  <div class="server-status"><i id="status-dot"></i><span id="conexion" role="status">Conectando…</span></div>
+  <div class="top-actions"><button id="sound-btn" class="icon-btn" aria-pressed="false" title="Activar sonido">Sonido <span>OFF</span></button><button id="fullscreen-btn" class="icon-btn" title="Pantalla completa">⛶ <span class="hide-mobile">Ampliar</span></button></div>
+</header>
+<main>
+  <div class="match-toolbar"><div class="room-tag">Sala <strong id="sala-label">—</strong><button id="copy-btn" title="Copiar enlace de invitación" aria-label="Copiar enlace de invitación">⧉</button></div><div id="fase-label">Elige tu vehículo</div><div class="clock"><span aria-hidden="true">◷</span> <strong id="timer">03:00</strong></div></div>
+  <section class="hud" aria-label="Estado de los cuatro pilotos" id="hud"></section>
+  <section class="battle-stage" aria-label="Arena de combate">
+    <canvas id="arena" width="1120" height="640" aria-label="Mapa de combate. Usa flechas o WASD para moverte y espacio para disparar."></canvas>
+    <div class="stage-corners" aria-hidden="true"></div>
+    <div id="lobby-panel" class="overlay lobby-overlay">
+      <div class="garage">
+        <div class="garage-intro"><span class="garage-stamp">Combate vehicular · 4 jugadores</span><h1>ELIGE TU<br><em>MÁQUINA.</em></h1><p>Cuatro pilotos entran.<br>Solo uno sale conduciendo.</p><div class="mini-controls"><kbd>W A S D</kbd><span>o flechas para moverte</span><kbd>ESPACIO</kbd><span>para disparar</span></div><div class="arena-note">Paredes fijas. Disparo frontal.<br>Último vehículo activo gana.</div></div>
+        <div class="garage-config">
+          <div class="vehicle-grid" id="vehicle-grid" aria-label="Selección de vehículo"></div>
+          <div class="vehicle-description"><div><strong id="carro-name">Rayo</strong><span id="carro-type">Buggy ligero</span></div><p id="carro-detail">Muévete rápido. Mantente fuera de la línea de fuego.</p><div id="stats" class="stats"></div></div>
+          <form id="join-form"><div class="form-row"><label>Tu nombre<input id="nombre" autocomplete="nickname" maxlength="18" placeholder="Nombre del piloto" required></label><label class="room-field">Código de sala<input id="codigo" maxlength="8" pattern="[A-Za-z0-9]{3,8}" required spellcheck="false" autocomplete="off" aria-describedby="room-hint"></label></div><p id="room-hint" class="form-hint">Comparte el mismo código con otros tres pilotos.</p><button id="join-btn" type="submit" class="primary-btn">Entrar a la sala <span aria-hidden="true">↗</span></button></form>
+          <div id="waiting-panel" hidden><div class="waiting-heading"><strong id="ocupacion">1 / 4 pilotos</strong><span>En la misma sala</span></div><div id="roster" class="roster"></div><button id="ready-btn" class="primary-btn">Estoy listo <span aria-hidden="true">✓</span></button><p class="form-hint">La ronda empieza cuando los cuatro estén listos.</p><button id="leave-btn" class="text-btn">Salir de la sala</button></div>
+        </div>
+      </div>
+    </div>
+    <div id="countdown-panel" class="overlay countdown-overlay" hidden><div><span>MOTORES ENCENDIDOS</span><strong id="count-number">3</strong><p>Prepárate para combatir</p></div></div>
+    <div id="result-panel" class="overlay result-overlay" hidden><div class="result-box"><span class="result-kicker">FIN DE LA RONDA</span><h2 id="result-title">¡Victoria!</h2><canvas id="winner-car" width="200" height="120" aria-hidden="true"></canvas><p id="result-detail"></p><button id="rematch-btn" class="primary-btn">Volver al lobby <span aria-hidden="true">↻</span></button><p class="form-hint">Todos vuelven a prepararse para la siguiente ronda.</p></div></div>
+    <div id="eliminado" class="spectator-banner" hidden>Vehículo destruido · Estás observando la partida</div>
+  </section>
+  <footer class="control-bar"><div><kbd>WASD</kbd><span>/</span><kbd>↑ ↓ ← →</kbd><span>Mover</span><kbd>ESPACIO</kbd><span>Disparar</span></div><p>Usa las paredes para cubrirte.</p><span class="local-badge" id="mi-piloto">Sin piloto</span></footer>
+  <div class="touch-controls" id="touch-controls" aria-label="Controles táctiles"><div class="dpad"><button data-dir="arriba" aria-label="Mover arriba">▲</button><button data-dir="izquierda" aria-label="Mover izquierda">◀</button><button data-dir="abajo" aria-label="Mover abajo">▼</button><button data-dir="derecha" aria-label="Mover derecha">▶</button></div><button id="touch-fire" aria-label="Disparar">FUEGO</button></div>
+  <div class="bottom-line"><span>Una arena. Cuatro estilos. Tu estrategia.</span><span>Elixir + Canvas · Proyecto académico</span></div>
+</main>
+</div>
+<div id="toast" role="status" aria-live="polite" hidden></div>
+<dialog id="disconnect-dialog"><h2>Conexión interrumpida</h2><p>Tu vehículo salió de la partida. Comprueba la conexión y vuelve al lobby.</p><button id="reconnect-btn" class="primary-btn">Volver a conectar</button></dialog>
+</body></html>
