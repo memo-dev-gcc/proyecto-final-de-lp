@@ -133,7 +133,7 @@ defmodule Arena.ReglasTest do
     estado = put_in(estado.jugadores["p3"].vida, 0)
 
     balas = [
-      %{id: 1, owner: "p0", personaje: "rayo", x: 1008, y: 100, dx: 1, dy: 0, dano: 20, ttl: 50},
+      %{id: 1, owner: "p0", personaje: "rayo", x: 1328, y: 100, dx: 1, dy: 0, dano: 20, ttl: 50},
       %{id: 2, owner: "p1", personaje: "muro", x: 112, y: 100, dx: -1, dy: 0, dano: 20, ttl: 50}
     ]
 

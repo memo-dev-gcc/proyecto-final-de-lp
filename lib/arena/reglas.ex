@@ -1,7 +1,8 @@
 defmodule Arena.Reglas do
   @moduledoc "Reglas puras: reciben mapas inmutables y devuelven estados nuevos. Sin procesos, IO ni reloj del sistema."
-  @ancho 1120
-  @alto 640
+  alias Arena.Objetos
+  @ancho 1440
+  @alto 800
   @radio 14
   @personajes %{
     "rayo" => %{
@@ -43,9 +44,9 @@ defmodule Arena.Reglas do
   }
   @spawns [
     {100, 100, "derecha"},
-    {1020, 100, "abajo"},
-    {100, 540, "arriba"},
-    {1020, 540, "izquierda"}
+    {1340, 100, "abajo"},
+    {100, 700, "arriba"},
+    {1340, 700, "izquierda"}
   ]
   @direcciones %{
     "arriba" => {0, -1},
@@ -57,26 +58,34 @@ defmodule Arena.Reglas do
 
   def personajes, do: @personajes
 
+  def dimensiones, do: %{ancho: @ancho, alto: @alto}
+
   def mapa do
     [
-      %{x: 0, y: 0, w: 1120, h: 40},
-      %{x: 0, y: 600, w: 1120, h: 40},
-      %{x: 0, y: 40, w: 40, h: 560},
-      %{x: 1080, y: 40, w: 40, h: 560},
+      %{x: 0, y: 0, w: 1440, h: 40},
+      %{x: 0, y: 760, w: 1440, h: 40},
+      %{x: 0, y: 40, w: 40, h: 720},
+      %{x: 1400, y: 40, w: 40, h: 720},
       %{x: 280, y: 120, w: 120, h: 40},
-      %{x: 720, y: 120, w: 120, h: 40},
+      %{x: 1040, y: 120, w: 120, h: 40},
       %{x: 120, y: 240, w: 40, h: 120},
-      %{x: 960, y: 280, w: 40, h: 120},
-      %{x: 280, y: 280, w: 120, h: 40},
-      %{x: 720, y: 320, w: 120, h: 40},
-      %{x: 500, y: 240, w: 120, h: 160},
-      %{x: 280, y: 480, w: 120, h: 40},
-      %{x: 720, y: 480, w: 120, h: 40}
+      %{x: 1280, y: 440, w: 40, h: 120},
+      %{x: 280, y: 320, w: 120, h: 40},
+      %{x: 1040, y: 440, w: 120, h: 40},
+      %{x: 660, y: 320, w: 120, h: 160},
+      %{x: 280, y: 640, w: 120, h: 40},
+      %{x: 1040, y: 640, w: 120, h: 40},
+      %{x: 480, y: 480, w: 80, h: 40},
+      %{x: 880, y: 280, w: 80, h: 40}
     ]
   end
 
   def nueva do
     %{
+      cajas: Objetos.cajas(),
+      objetos: Objetos.iniciales(),
+      minas: [],
+      siguiente_mina: 0,
       fase: "lobby",
       modo: "multi",
       jugadores: %{},
@@ -130,6 +139,10 @@ defmodule Arena.Reglas do
       x: x,
       y: y,
       direccion: direccion,
+      escudo: false,
+      turbo_hasta: 0,
+      potentes: 0,
+      minas_carga: 1,
       vida: stats.vida,
       max_vida: stats.vida,
       listo: false,
@@ -183,6 +196,9 @@ defmodule Arena.Reglas do
     {:ok, %{nueva() | jugadores: jugadores}}
   end
 
+  defp aplicar_accion(%{fase: "jugando"} = estado, id, %{"tipo" => "mina"}),
+    do: Objetos.colocar_mina(estado, id)
+
   defp aplicar_accion(_, _, _), do: {:error, "Acción no disponible en este momento."}
 
   def quitar(%{fase: fase} = estado, id) when fase in ["lobby", "cuenta"] do
@@ -231,8 +247,10 @@ defmodule Arena.Reglas do
         impactos: Enum.filter(Enum.map(estado.impactos, &%{&1 | ttl: &1.ttl - 1}), &(&1.ttl > 0))
     }
     |> mover_jugadores()
+    |> Objetos.recoger()
     |> disparar_jugadores()
     |> avanzar_proyectiles()
+    |> Objetos.avanzar_minas()
     |> resolver_final()
   end
 
@@ -246,12 +264,16 @@ defmodule Arena.Reglas do
         activo = actual.tick - p.ultima_input_tick <= 12
         direccion = if activo, do: p.movimiento, else: "quieto"
         {dx, dy} = @direcciones[direccion]
-        velocidad_base = @personajes[p.personaje].velocidad
+
+        velocidad_base =
+          @personajes[p.personaje].velocidad *
+            if(p.turbo_hasta > actual.tick, do: 1.35, else: 1.0)
+
         nx = p.x + dx * velocidad_base
         ny = p.y + dy * velocidad_base
 
         libre =
-          not pared?(nx, ny, @radio) and
+          not pared?(nx, ny, @radio) and is_nil(Objetos.caja_en(actual.cajas, nx, ny, @radio)) and
             not Enum.any?(actual.jugadores, fn {otro, q} ->
               otro != id and q.vida > 0 and distancia2(nx, ny, q.x, q.y) < 4 * @radio * @radio
             end)
@@ -288,11 +310,13 @@ defmodule Arena.Reglas do
           y: p.y + dy * 20,
           dx: dx,
           dy: dy,
-          dano: stats.dano,
-          ttl: 100
+          dano: if(p.potentes > 0, do: round(stats.dano * 1.5), else: stats.dano),
+          potente: p.potentes > 0,
+          ttl: 160
         }
 
         actual = put_in(actual.jugadores[id].cooldown_ticks, stats.recarga)
+        actual = put_in(actual.jugadores[id].potentes, max(0, p.potentes - 1))
 
         %{
           actual
@@ -306,10 +330,10 @@ defmodule Arena.Reglas do
   end
 
   defp avanzar_proyectiles(estado) do
-    # Acumular daños antes de aplicarlos permite eliminaciones simultáneas.
-    {balas, danos, impactos} =
-      Enum.reduce(estado.proyectiles, {[], %{}, estado.impactos}, fn bala,
-                                                                     {vivas, danos, efectos} ->
+    # Los daños se aplican al final del lote para permitir eliminaciones simultáneas.
+    {nuevo, danos} =
+      Enum.reduce(estado.proyectiles, {%{estado | proyectiles: []}, %{}}, fn bala,
+                                                                             {actual, danos} ->
         b = %{bala | x: bala.x + bala.dx * 12, y: bala.y + bala.dy * 12, ttl: bala.ttl - 1}
 
         objetivo =
@@ -317,30 +341,38 @@ defmodule Arena.Reglas do
             id != b.owner and p.vida > 0 and distancia2(b.x, b.y, p.x, p.y) <= 18 * 18
           end)
 
+        caja = Objetos.caja_en(actual.cajas, b.x, b.y, 3)
+
         cond do
           b.ttl <= 0 ->
-            {vivas, danos, efectos}
+            {actual, danos}
 
           pared?(b.x, b.y, 3) ->
-            {vivas, danos, [%{x: b.x, y: b.y, ttl: 6, tipo: "pared"} | efectos]}
+            {%{actual | impactos: [%{x: b.x, y: b.y, ttl: 6, tipo: "pared"} | actual.impactos]},
+             danos}
+
+          caja != nil ->
+            actual = Objetos.golpear_caja(actual, caja, b.dano)
+
+            {%{actual | impactos: [%{x: b.x, y: b.y, ttl: 8, tipo: "caja"} | actual.impactos]},
+             danos}
 
           objetivo != nil ->
             {id, _} = objetivo
 
-            {vivas, Map.update(danos, id, b.dano, &(&1 + b.dano)),
-             [%{x: b.x, y: b.y, ttl: 9, tipo: "carro"} | efectos]}
+            {%{actual | impactos: [%{x: b.x, y: b.y, ttl: 9, tipo: "carro"} | actual.impactos]},
+             Map.update(danos, id, [b.dano], &(&1 ++ [b.dano]))}
 
           true ->
-            {[b | vivas], danos, efectos}
+            {%{actual | proyectiles: [b | actual.proyectiles]}, danos}
         end
       end)
 
-    jugadores =
-      Enum.reduce(danos, estado.jugadores, fn {id, dano}, ps ->
-        update_in(ps[id].vida, &max(0, &1 - dano))
-      end)
-
-    %{estado | proyectiles: Enum.reverse(balas), jugadores: jugadores, impactos: impactos}
+    %{
+      nuevo
+      | proyectiles: Enum.reverse(nuevo.proyectiles),
+        jugadores: Objetos.danar(nuevo.jugadores, danos)
+    }
   end
 
   defp resolver_final(%{modo: "practica"} = estado), do: estado
@@ -378,6 +410,10 @@ defmodule Arena.Reglas do
           :x,
           :y,
           :direccion,
+          :escudo,
+          :turbo_hasta,
+          :potentes,
+          :minas_carga,
           :vida,
           :max_vida,
           :listo,
@@ -392,6 +428,9 @@ defmodule Arena.Reglas do
       :cuenta,
       :restantes,
       :resultado,
+      :cajas,
+      :objetos,
+      :minas,
       :proyectiles,
       :impactos
     ])

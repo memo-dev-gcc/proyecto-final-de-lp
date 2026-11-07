@@ -35,7 +35,7 @@ function conectar(){
   socket.addEventListener('open',()=>{$('conexion').textContent='Conectado';$('status-dot').classList.add('online');$('join-btn').disabled=false;$('practice-btn').disabled=false});
   socket.addEventListener('message',e=>{
     let mensaje;try{mensaje=JSON.parse(e.data)}catch{return}
-    if(mensaje.tipo==='hola'){player_id=mensaje.player_id;renderer.prepararMapa(mensaje.mapa);if(query.get('practica')==='1')iniciarPractica()}
+    if(mensaje.tipo==='hola'){player_id=mensaje.player_id;renderer.prepararMapa(mensaje.mapa,mensaje.ancho,mensaje.alto);if(query.get('practica')==='1')iniciarPractica()}
     if(mensaje.tipo==='dentro'){
       dentro=true;player_id=mensaje.player_id;$('sala-label').textContent=mensaje.sala;$('join-form').hidden=true;$('waiting-panel').hidden=false;
       const url=new URL(location.href);url.searchParams.set('sala',mensaje.sala);history.replaceState({},'',url);sonido('join');
@@ -66,6 +66,9 @@ function iniciarPractica(){
 }
 $('practice-btn').addEventListener('click',iniciarPractica);
 $('practice-waiting-btn').addEventListener('click',()=>location.assign('/?practica=1'));
+function colocarMina(){if(estado_partida?.fase==='jugando'){enviar({tipo:'mina'})}}
+$('mine-btn').addEventListener('click',colocarMina);
+$('touch-mine').addEventListener('click',colocarMina);
 $('ready-btn').addEventListener('click',()=>{const yo=estado_partida?.jugadores.find(p=>p.id===player_id);enviar({tipo:'listo',valor:!yo?.listo});sonido('ready')});
 $('leave-btn').addEventListener('click',()=>location.assign('/'));
 $('exit-practice-btn').addEventListener('click',()=>location.assign('/'));
@@ -98,6 +101,15 @@ function actualizar(){
   const segundos=Math.ceil(e.restantes/30);$('timer').textContent=e.modo==='practica'?'Libre':String(Math.floor(segundos/60)).padStart(2,'0')+':'+String(segundos%60).padStart(2,'0');
   $('lobby-panel').hidden=fase!=='lobby';$('countdown-panel').hidden=fase!=='cuenta';$('result-panel').hidden=fase!=='final';$('eliminado').hidden=!(fase==='jugando'&&yo?.vida<=0);
   $('touch-controls').classList.toggle('active',fase==='jugando'&&yo?.vida>0);
+  $('effect-bar').hidden=fase!=='jugando';
+  const efectos=[];
+  if(yo?.escudo)efectos.push('Escudo activo');
+  if(yo?.turbo_hasta>e.tick)efectos.push('Turbo '+Math.ceil((yo.turbo_hasta-e.tick)/30)+' s');
+  if(yo?.potentes>0)efectos.push('Potente: '+yo.potentes+' disparos');
+  $('effect-status').textContent=efectos.join(' · ')||'Sin mejoras activas';
+  $('mine-count').textContent=yo?.minas_carga??0;
+  const mina_bloqueada=!yo||yo.vida<=0||yo.minas_carga<1||e.minas?.some(m=>m.owner===player_id);
+  $('mine-btn').disabled=mina_bloqueada;$('touch-mine').disabled=mina_bloqueada;
   if(fase==='cuenta')$('count-number').textContent=Math.ceil(e.cuenta/30);
   $('ocupacion').textContent=e.jugadores.length+' / 4 pilotos';
   $('mi-piloto').textContent=yo?'Tu vehículo: '+carros[yo.personaje].nombre:'Sin piloto';
@@ -126,11 +138,12 @@ function actualizar(){
 }
 $('arena').addEventListener('pointerdown',()=>$('arena').focus({preventScroll:true}));
 const mapeo={ArrowUp:'arriba',KeyW:'arriba',ArrowDown:'abajo',KeyS:'abajo',ArrowLeft:'izquierda',KeyA:'izquierda',ArrowRight:'derecha',KeyD:'derecha'};
-function codigoTecla(e){return e.code || ({w:'KeyW',a:'KeyA',s:'KeyS',d:'KeyD',' ':'Space'}[e.key?.toLowerCase()] || e.key)}
+function codigoTecla(e){return e.code || ({w:'KeyW',a:'KeyA',s:'KeyS',d:'KeyD',e:'KeyE',' ':'Space'}[e.key?.toLowerCase()] || e.key)}
 function esCampo(){return ['INPUT','TEXTAREA'].includes(document.activeElement?.tagName) || document.activeElement?.isContentEditable}
 window.addEventListener('keydown',e=>{
   if(estado_partida?.fase!=='jugando'||esCampo())return;
   const codigo=codigoTecla(e);
+  if(codigo==='KeyE'){e.preventDefault();if(!e.repeat)colocarMina();return}
   if(mapeo[codigo]||codigo==='Space'){e.preventDefault();if(!teclas.has(codigo)){teclas.add(codigo);mandarInput()}}
 });
 window.addEventListener('keyup',e=>{const codigo=codigoTecla(e);if(teclas.has(codigo)){e.preventDefault();teclas.delete(codigo);mandarInput()}});

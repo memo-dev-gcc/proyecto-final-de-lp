@@ -88,3 +88,21 @@ test('prueba individual sin bots permite WASD y salir al menú', async ({page}) 
   await expect(page.locator('#fase-label')).toHaveText('Elige tu vehículo');
   await expect(page).not.toHaveURL(/practica=1/);
 });
+
+test('recoger turbo y colocar mina se reflejan en estado y HUD reales', async ({page}) => {
+  let estado;
+  page.on('websocket',ws=>ws.on('framereceived',({payload})=>{const m=JSON.parse(payload);if(m.tipo==='estado')estado=m.estado}));
+  await page.goto('/');
+  await expect(page.locator('#conexion')).toHaveText('Conectado');
+  await page.getByRole('button',{name:'Probar movimiento',exact:true}).click();
+  await expect(page.locator('#fase-label')).toHaveText('Prueba de movimiento');
+  await page.keyboard.down('d');
+  await expect.poll(()=>estado?.jugadores[0].turbo_hasta,{timeout:6000}).toBeGreaterThan(0);
+  await page.keyboard.up('d');
+  await expect(page.locator('#effect-status')).toContainText('Turbo');
+  await page.keyboard.press('e');
+  await expect.poll(()=>estado?.minas.length).toBe(1);
+  await expect(page.locator('#mine-btn')).toBeDisabled();
+  expect(estado.jugadores[0].minas_carga).toBe(0);
+  await page.screenshot({path:'test-results/objetos-final.png',fullPage:true});
+});

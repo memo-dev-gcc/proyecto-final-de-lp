@@ -18,11 +18,11 @@
   <div class="match-toolbar"><div class="room-tag">Sala <strong id="sala-label">—</strong><button id="exit-practice-btn" class="text-btn" hidden>Salir de práctica</button><button id="copy-btn" title="Copiar enlace de invitación" aria-label="Copiar enlace de invitación">⧉</button></div><div id="fase-label">Elige tu vehículo</div><div class="clock"><span aria-hidden="true">◷</span> <strong id="timer">03:00</strong></div></div>
   <section class="hud" aria-label="Estado de los cuatro pilotos" id="hud"></section>
   <section class="battle-stage" aria-label="Arena de combate">
-    <canvas id="arena" tabindex="0" width="1120" height="640" aria-label="Mapa de combate. Usa flechas o WASD para moverte y espacio para disparar."></canvas>
+    <canvas id="arena" tabindex="0" width="1440" height="800" aria-label="Mapa de combate. Usa flechas o WASD para moverte y espacio para disparar."></canvas>
     <div class="stage-corners" aria-hidden="true"></div>
     <div id="lobby-panel" class="overlay lobby-overlay">
       <div class="garage">
-        <div class="garage-intro"><span class="garage-stamp">Combate vehicular · 4 jugadores</span><h1>ELIGE TU<br><em>MÁQUINA.</em></h1><p>Cuatro pilotos entran.<br>Solo uno sale conduciendo.</p><div class="mini-controls"><kbd>W A S D</kbd><span>o flechas para moverte</span><kbd>ESPACIO</kbd><span>para disparar</span></div><div class="arena-note">Paredes fijas. Disparo frontal.<br>Último vehículo activo gana.</div></div>
+        <div class="garage-intro"><span class="garage-stamp">Combate vehicular · 4 jugadores</span><h1>ELIGE TU<br><em>MÁQUINA.</em></h1><p>Cuatro pilotos entran.<br> Solo uno sale conduciendo.</p><div class="mini-controls"><kbd>W A S D</kbd><span>o flechas para moverte</span><kbd>ESPACIO</kbd><span>para disparar · E para mina</span></div><div class="arena-note">Busca mejoras. Rompe cajas.<br>Último vehículo activo gana.</div></div>
         <div class="garage-config">
           <div class="vehicle-grid" id="vehicle-grid" aria-label="Selección de vehículo"></div>
           <div class="vehicle-description"><div><strong id="carro-name">Rayo</strong><span id="carro-type">Buggy ligero</span></div><p id="carro-detail">Muévete rápido. Mantente fuera de la línea de fuego.</p><div id="stats" class="stats"></div></div>
@@ -35,8 +35,10 @@
     <div id="result-panel" class="overlay result-overlay" hidden><div class="result-box"><span class="result-kicker">FIN DE LA RONDA</span><h2 id="result-title">¡Victoria!</h2><canvas id="winner-car" width="200" height="120" aria-hidden="true"></canvas><p id="result-detail"></p><button id="rematch-btn" class="primary-btn">Volver al lobby <span aria-hidden="true">↻</span></button><p class="form-hint">Todos vuelven a prepararse para la siguiente ronda.</p></div></div>
     <div id="eliminado" class="spectator-banner" hidden>Vehículo destruido · Estás observando la partida</div>
   </section>
+  <div class="effect-bar" id="effect-bar" hidden><div id="effect-status" aria-live="polite">Sin mejoras activas</div><button id="mine-btn" type="button">Colocar mina <kbd>E</kbd> <span id="mine-count">1</span></button></div>
+  <div class="pickup-legend" aria-label="Objetos de la arena"><span title="Recupera hasta 30 puntos de vida">+ Botiquín</span><span title="Absorbe un impacto">◇ Escudo</span><span title="35% de velocidad extra durante 6 segundos">» Turbo</span><span title="Cinco disparos con más daño">↑ Potente</span><span title="Recarga una mina">● Mina</span><span>Destruye cajas para encontrar mejoras</span></div>
   <footer class="control-bar"><div><kbd>WASD</kbd><span>/</span><kbd>↑ ↓ ← →</kbd><span>Mover</span><kbd>ESPACIO</kbd><span>Disparar</span></div><p>Usa las paredes para cubrirte.</p><span class="local-badge" id="mi-piloto">Sin piloto</span></footer>
-  <div class="touch-controls" id="touch-controls" aria-label="Controles táctiles"><div class="dpad"><button data-dir="arriba" aria-label="Mover arriba">▲</button><button data-dir="izquierda" aria-label="Mover izquierda">◀</button><button data-dir="abajo" aria-label="Mover abajo">▼</button><button data-dir="derecha" aria-label="Mover derecha">▶</button></div><button id="touch-fire" aria-label="Disparar">FUEGO</button></div>
+  <div class="touch-controls" id="touch-controls" aria-label="Controles táctiles"><div class="dpad"><button data-dir="arriba" aria-label="Mover arriba">▲</button><button data-dir="izquierda" aria-label="Mover izquierda">◀</button><button data-dir="abajo" aria-label="Mover abajo">▼</button><button data-dir="derecha" aria-label="Mover derecha">▶</button></div><button id="touch-mine" aria-label="Colocar mina">MINA</button><button id="touch-fire" aria-label="Disparar">FUEGO</button></div>
   <div class="bottom-line"><span>Una arena. Cuatro estilos. Tu estrategia.</span><span>Elixir + Canvas · Proyecto académico</span></div>
 </main>
 </div>

@@ -12,8 +12,8 @@ defmodule Arena.Socket do
         player_id: id,
         personajes: Arena.Reglas.personajes(),
         mapa: Arena.Reglas.mapa(),
-        ancho: 1120,
-        alto: 640
+        ancho: 1440,
+        alto: 800
       })},
      %{id: id, partida: nil, sala: nil, ventana: System.monotonic_time(:millisecond), mensajes: 0}}
   end
@@ -84,7 +84,7 @@ defmodule Arena.Socket do
   end
 
   defp procesar(%{"tipo" => tipo} = mensaje, %{partida: partida} = estado)
-       when is_pid(partida) and tipo in ["elegir", "listo", "revancha"] do
+       when is_pid(partida) and tipo in ["elegir", "listo", "revancha", "mina"] do
     case Arena.Partida.accion(partida, estado.id, mensaje) do
       :ok -> {:ok, estado}
       {:error, texto} -> error(texto, estado)

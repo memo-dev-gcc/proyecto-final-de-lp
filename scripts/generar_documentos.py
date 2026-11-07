@@ -67,7 +67,7 @@ def construir(nombre,paginas):
                 md.append('| '+' | '.join(filas[0])+' |\n| '+' | '.join(['---']*len(filas[0]))+' |\n'+'\n'.join('| '+' | '.join(f)+' |' for f in filas[1:])+'\n')
             elif tipo=='imagen':
                 ruta=RAIZ/datos[0]
-                iw,ih=PILImage.open(ruta).size;im=Image(str(ruta),width=ANCHO,height=ANCHO*ih/iw);historia.extend([im,Spacer(1,7)]);md.append(f'![Captura del juego](../capturas/{Path(datos[0]).name})\n')
+                iw,ih=PILImage.open(ruta).size;factor=min(ANCHO/iw,datos[1]/ih if len(datos)>1 else ANCHO/iw);im=Image(str(ruta),width=iw*factor,height=ih*factor);historia.extend([im,Spacer(1,7)]);md.append(f'![Captura del juego](../capturas/{Path(datos[0]).name})\n')
             elif tipo=='diagrama':historia.extend([Diagrama(),Spacer(1,12)]);md.append('Navegadores ↔ WebSockets ↔ procesos Socket ↔ GenServer de partida ↔ reglas puras.\n')
     def pie(c,doc):
         c.saveState();c.setFont(NORMAL,9);c.setFillColor(colors.black);c.drawCentredString(A4[0]/2,28,str(doc.page));c.restoreState()
