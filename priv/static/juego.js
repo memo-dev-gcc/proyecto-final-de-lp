@@ -30,18 +30,18 @@ function mostrarSeleccion(){
 }
 mostrarSeleccion();
 function conectar(){
-  $('conexion').textContent='Conectando…';$('status-dot').classList.remove('online');$('join-btn').disabled=true;
+  $('conexion').textContent='Conectando…';$('status-dot').classList.remove('online');$('join-btn').disabled=true;$('practice-btn').disabled=true;
   socket=new WebSocket(`${location.protocol==='https:'?'wss':'ws'}://${location.host}/ws`);
-  socket.addEventListener('open',()=>{$('conexion').textContent='Conectado';$('status-dot').classList.add('online');$('join-btn').disabled=false});
+  socket.addEventListener('open',()=>{$('conexion').textContent='Conectado';$('status-dot').classList.add('online');$('join-btn').disabled=false;$('practice-btn').disabled=false});
   socket.addEventListener('message',e=>{
     let mensaje;try{mensaje=JSON.parse(e.data)}catch{return}
-    if(mensaje.tipo==='hola'){player_id=mensaje.player_id;renderer.prepararMapa(mensaje.mapa)}
+    if(mensaje.tipo==='hola'){player_id=mensaje.player_id;renderer.prepararMapa(mensaje.mapa);if(query.get('practica')==='1')iniciarPractica()}
     if(mensaje.tipo==='dentro'){
       dentro=true;player_id=mensaje.player_id;$('sala-label').textContent=mensaje.sala;$('join-form').hidden=true;$('waiting-panel').hidden=false;
       const url=new URL(location.href);url.searchParams.set('sala',mensaje.sala);history.replaceState({},'',url);sonido('join');
     }
     if(mensaje.tipo==='estado'){estado_partida=mensaje.estado;renderer.recibir(estado_partida,player_id);actualizar()}
-    if(mensaje.tipo==='error'){notificar(mensaje.mensaje);$('join-btn').disabled=false}
+    if(mensaje.tipo==='error'){notificar(mensaje.mensaje);$('join-btn').disabled=false;$('practice-btn').disabled=false}
   });
   socket.addEventListener('close',()=>{
     $('conexion').textContent='Desconectado';$('status-dot').classList.remove('online');$('join-btn').disabled=true;limpiarControles();
@@ -59,12 +59,21 @@ $('join-form').addEventListener('submit',e=>{
   try{localStorage.setItem('arena_nombre',nombre)}catch{}
   $('join-btn').disabled=true;enviar({tipo:'entrar',nombre,sala,personaje:seleccionado});
 });
+function iniciarPractica(){
+  const nombre=$('nombre').value.trim()||'Piloto';
+  $('join-btn').disabled=true;$('practice-btn').disabled=true;
+  enviar({tipo:'practica',nombre,personaje:seleccionado});
+}
+$('practice-btn').addEventListener('click',iniciarPractica);
+$('practice-waiting-btn').addEventListener('click',()=>location.assign('/?practica=1'));
 $('ready-btn').addEventListener('click',()=>{const yo=estado_partida?.jugadores.find(p=>p.id===player_id);enviar({tipo:'listo',valor:!yo?.listo});sonido('ready')});
-$('leave-btn').addEventListener('click',()=>location.reload());
+$('leave-btn').addEventListener('click',()=>location.assign('/'));
+$('exit-practice-btn').addEventListener('click',()=>location.assign('/'));
 $('rematch-btn').addEventListener('click',()=>{limpiarControles();enviar({tipo:'revancha'})});
 $('reconnect-btn').addEventListener('click',()=>location.reload());
 $('copy-btn').addEventListener('click',async()=>{
-  const url=new URL(location.href);url.searchParams.set('sala',dentro?$('sala-label').textContent:$('codigo').value.toUpperCase());
+  if(estado_partida?.modo==='practica'){notificar('La prueba es individual. Para invitar amigos, vuelve al inicio y entra a una sala.');return}
+  const url=new URL(location.href);url.searchParams.set('sala',dentro?new URL(location.href).searchParams.get('sala'):$('codigo').value.toUpperCase());
   try{await navigator.clipboard.writeText(url.toString());notificar('Enlace copiado. Compártelo con otros tres pilotos.')}catch{notificar('Comparte esta dirección: '+url.toString())}
 });
 $('fullscreen-btn').addEventListener('click',async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen()}catch{notificar('Tu navegador no permite pantalla completa.')}});
@@ -83,7 +92,10 @@ function actualizar(){
   if(yo&&seleccionado!==yo.personaje){seleccionado=yo.personaje;mostrarSeleccion()}
   const fase=e.fase;
   $('fase-label').textContent={lobby:'Preparando partida',cuenta:'Cuenta atrás',jugando:'En combate',final:'Ronda terminada'}[fase];
-  const segundos=Math.ceil(e.restantes/30);$('timer').textContent=String(Math.floor(segundos/60)).padStart(2,'0')+':'+String(segundos%60).padStart(2,'0');
+  $('practice-waiting-btn').hidden=e.modo==='practica';
+  $('exit-practice-btn').hidden=e.modo!=='practica';
+  if(e.modo==='practica'){$('sala-label').textContent='PRUEBA';$('fase-label').textContent='Prueba de movimiento'}
+  const segundos=Math.ceil(e.restantes/30);$('timer').textContent=e.modo==='practica'?'Libre':String(Math.floor(segundos/60)).padStart(2,'0')+':'+String(segundos%60).padStart(2,'0');
   $('lobby-panel').hidden=fase!=='lobby';$('countdown-panel').hidden=fase!=='cuenta';$('result-panel').hidden=fase!=='final';$('eliminado').hidden=!(fase==='jugando'&&yo?.vida<=0);
   $('touch-controls').classList.toggle('active',fase==='jugando'&&yo?.vida>0);
   if(fase==='cuenta')$('count-number').textContent=Math.ceil(e.cuenta/30);
@@ -109,16 +121,19 @@ function actualizar(){
     $('result-detail').textContent=ganador?`${ganador.nombre} sobrevivió con ${carros[ganador.personaje].nombre}.`:'No hubo un único superviviente. La arena pide revancha.';
     retrato($('winner-car'),ganador?.personaje||seleccionado,true);
   }
-  if(fase!==anterior_fase){limpiarControles();if(fase==='jugando')sonido('start');if(fase==='final')sonido('end');anterior_fase=fase}
+  if(fase!==anterior_fase){limpiarControles();if(fase==='jugando'){$('arena').focus({preventScroll:true});sonido('start')};if(fase==='final')sonido('end');anterior_fase=fase}
   if(e.tick-ultimo_tick_sonido>3){if(e.impactos.some(i=>i.tipo==='carro'&&i.ttl>=8))sonido('hit');else if(e.proyectiles.some(b=>b.owner===player_id&&b.ttl>=99))sonido('shot');ultimo_tick_sonido=e.tick}
 }
+$('arena').addEventListener('pointerdown',()=>$('arena').focus({preventScroll:true}));
 const mapeo={ArrowUp:'arriba',KeyW:'arriba',ArrowDown:'abajo',KeyS:'abajo',ArrowLeft:'izquierda',KeyA:'izquierda',ArrowRight:'derecha',KeyD:'derecha'};
+function codigoTecla(e){return e.code || ({w:'KeyW',a:'KeyA',s:'KeyS',d:'KeyD',' ':'Space'}[e.key?.toLowerCase()] || e.key)}
 function esCampo(){return ['INPUT','TEXTAREA'].includes(document.activeElement?.tagName) || document.activeElement?.isContentEditable}
 window.addEventListener('keydown',e=>{
   if(estado_partida?.fase!=='jugando'||esCampo())return;
-  if(mapeo[e.code]||e.code==='Space'){e.preventDefault();if(!teclas.has(e.code)){teclas.add(e.code);mandarInput()}}
+  const codigo=codigoTecla(e);
+  if(mapeo[codigo]||codigo==='Space'){e.preventDefault();if(!teclas.has(codigo)){teclas.add(codigo);mandarInput()}}
 });
-window.addEventListener('keyup',e=>{if(teclas.has(e.code)){e.preventDefault();teclas.delete(e.code);mandarInput()}});
+window.addEventListener('keyup',e=>{const codigo=codigoTecla(e);if(teclas.has(codigo)){e.preventDefault();teclas.delete(codigo);mandarInput()}});
 function limpiarControles(){teclas.clear();direccion_touch='quieto';fuego_touch=false;if(dentro)enviar({tipo:'input',direccion:'quieto',disparar:false});if(document.activeElement?.tagName==='BUTTON')document.activeElement.blur()}
 window.addEventListener('blur',limpiarControles);document.addEventListener('visibilitychange',()=>{if(document.hidden)limpiarControles()});
 function mandarInput(){

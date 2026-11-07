@@ -15,10 +15,10 @@
   <div class="top-actions"><button id="sound-btn" class="icon-btn" aria-pressed="false" title="Activar sonido">Sonido <span>OFF</span></button><button id="fullscreen-btn" class="icon-btn" title="Pantalla completa">⛶ <span class="hide-mobile">Ampliar</span></button></div>
 </header>
 <main>
-  <div class="match-toolbar"><div class="room-tag">Sala <strong id="sala-label">—</strong><button id="copy-btn" title="Copiar enlace de invitación" aria-label="Copiar enlace de invitación">⧉</button></div><div id="fase-label">Elige tu vehículo</div><div class="clock"><span aria-hidden="true">◷</span> <strong id="timer">03:00</strong></div></div>
+  <div class="match-toolbar"><div class="room-tag">Sala <strong id="sala-label">—</strong><button id="exit-practice-btn" class="text-btn" hidden>Salir de práctica</button><button id="copy-btn" title="Copiar enlace de invitación" aria-label="Copiar enlace de invitación">⧉</button></div><div id="fase-label">Elige tu vehículo</div><div class="clock"><span aria-hidden="true">◷</span> <strong id="timer">03:00</strong></div></div>
   <section class="hud" aria-label="Estado de los cuatro pilotos" id="hud"></section>
   <section class="battle-stage" aria-label="Arena de combate">
-    <canvas id="arena" width="1120" height="640" aria-label="Mapa de combate. Usa flechas o WASD para moverte y espacio para disparar."></canvas>
+    <canvas id="arena" tabindex="0" width="1120" height="640" aria-label="Mapa de combate. Usa flechas o WASD para moverte y espacio para disparar."></canvas>
     <div class="stage-corners" aria-hidden="true"></div>
     <div id="lobby-panel" class="overlay lobby-overlay">
       <div class="garage">
@@ -26,8 +26,8 @@
         <div class="garage-config">
           <div class="vehicle-grid" id="vehicle-grid" aria-label="Selección de vehículo"></div>
           <div class="vehicle-description"><div><strong id="carro-name">Rayo</strong><span id="carro-type">Buggy ligero</span></div><p id="carro-detail">Muévete rápido. Mantente fuera de la línea de fuego.</p><div id="stats" class="stats"></div></div>
-          <form id="join-form"><div class="form-row"><label>Tu nombre<input id="nombre" autocomplete="nickname" maxlength="18" placeholder="Nombre del piloto" required></label><label class="room-field">Código de sala<input id="codigo" maxlength="8" pattern="[A-Za-z0-9]{3,8}" required spellcheck="false" autocomplete="off" aria-describedby="room-hint"></label></div><p id="room-hint" class="form-hint">Comparte el mismo código con otros tres pilotos.</p><button id="join-btn" type="submit" class="primary-btn">Entrar a la sala <span aria-hidden="true">↗</span></button></form>
-          <div id="waiting-panel" hidden><div class="waiting-heading"><strong id="ocupacion">1 / 4 pilotos</strong><span>En la misma sala</span></div><div id="roster" class="roster"></div><button id="ready-btn" class="primary-btn">Estoy listo <span aria-hidden="true">✓</span></button><p class="form-hint">La ronda empieza cuando los cuatro estén listos.</p><button id="leave-btn" class="text-btn">Salir de la sala</button></div>
+          <form id="join-form"><div class="form-row"><label>Tu nombre<input id="nombre" autocomplete="nickname" maxlength="18" placeholder="Nombre del piloto" required></label><label class="room-field">Código de sala<input id="codigo" maxlength="8" pattern="[A-Za-z0-9]{3,8}" required spellcheck="false" autocomplete="off" aria-describedby="room-hint"></label></div><p id="room-hint" class="form-hint">Comparte el mismo código con otros tres pilotos.</p><button id="join-btn" type="submit" class="primary-btn">Entrar a la sala <span aria-hidden="true">↗</span></button><button id="practice-btn" class="practice-btn" type="button" aria-label="Probar movimiento" disabled>Probar movimiento <span>Un jugador · Sin rivales</span></button></form>
+          <div id="waiting-panel" hidden><div class="waiting-heading"><strong id="ocupacion">1 / 4 pilotos</strong><span>En la misma sala</span></div><div id="roster" class="roster"></div><button id="ready-btn" class="primary-btn">Estoy listo <span aria-hidden="true">✓</span></button><p class="form-hint">La ronda empieza cuando los cuatro estén listos.</p><button id="practice-waiting-btn" class="practice-btn" type="button">Probar movimiento <span>Un jugador · Sin rivales</span></button><button id="leave-btn" class="text-btn">Salir de la sala</button></div>
         </div>
       </div>
     </div>

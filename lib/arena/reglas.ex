@@ -78,6 +78,7 @@ defmodule Arena.Reglas do
   def nueva do
     %{
       fase: "lobby",
+      modo: "multi",
       jugadores: %{},
       proyectiles: [],
       impactos: [],
@@ -225,7 +226,8 @@ defmodule Arena.Reglas do
     %{
       estado
       | tick: estado.tick + 1,
-        restantes: max(0, estado.restantes - 1),
+        restantes:
+          if(estado.modo == "practica", do: estado.restantes, else: max(0, estado.restantes - 1)),
         impactos: Enum.filter(Enum.map(estado.impactos, &%{&1 | ttl: &1.ttl - 1}), &(&1.ttl > 0))
     }
     |> mover_jugadores()
@@ -341,6 +343,8 @@ defmodule Arena.Reglas do
     %{estado | proyectiles: Enum.reverse(balas), jugadores: jugadores, impactos: impactos}
   end
 
+  defp resolver_final(%{modo: "practica"} = estado), do: estado
+
   defp resolver_final(estado) do
     vivos = estado.jugadores |> Map.values() |> Enum.filter(&(&1.vida > 0 and &1.conectado))
 
@@ -381,7 +385,16 @@ defmodule Arena.Reglas do
         ])
       )
 
-    Map.take(estado, [:fase, :tick, :cuenta, :restantes, :resultado, :proyectiles, :impactos])
+    Map.take(estado, [
+      :fase,
+      :modo,
+      :tick,
+      :cuenta,
+      :restantes,
+      :resultado,
+      :proyectiles,
+      :impactos
+    ])
     |> Map.put(:jugadores, jugadores)
   end
 end

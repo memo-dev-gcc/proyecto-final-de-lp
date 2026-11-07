@@ -4,3 +4,6 @@
 /test-results/
 .DS_Store
 *.log
+
+/docs/superpowers/
+__pycache__/

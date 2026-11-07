@@ -1,8 +1,18 @@
 # Arena de acero
 
+**Proyecto final de LP · Avance II · Versión 0.2.0**
+
 Combate vehicular 2D para **cuatro jugadores reales**, con servidor autoritativo en **Elixir/OTP** y gráficos originales en Canvas. No necesita cuentas, base de datos, imágenes externas ni un compilador de JavaScript.
 
 ![Partida real de Arena de acero](docs/capturas/combate.png)
+
+## Documentos de entrega
+
+- [Informe del Avance II](docs/entrega/Avance_II_Arena_de_acero.pdf)
+- [Manual de Elixir](docs/entrega/Manual_Elixir_Arena_de_acero.pdf)
+- [Guía para conectarse con los compañeros](docs/entrega/Conexion_multijugador.md)
+
+La entrega corresponde a una versión intermedia funcional, no a la versión final. Incluye la base de movimiento, sala, procesos, mensajes y combate básico. Quedan pendientes balance, pruebas en cuatro equipos físicos, ampliación de la arena y posibles objetos de vida o armamento.
 
 ## Ejecutar
 
@@ -24,7 +34,15 @@ Para detenerlo, pulsa Ctrl+C dos veces en la terminal. Para cambiar el puerto: `
 
 La primera descarga de dependencias necesita internet. Después el juego funciona dentro de tu red local sin servicios externos. Node.js solo se utiliza para las pruebas, no para jugar.
 
-## Cómo jugar
+## Probar el movimiento durante la revisión
+
+Pulsa **Probar movimiento**. Entrarás de inmediato a una arena privada con un solo vehículo, sin bots, rivales, cuenta atrás ni condición de victoria. El tiempo aparece como Libre. Puedes revisar WASD, flechas, paredes y disparo básico. Pulsa **Salir de práctica** para volver al menú.
+
+El navegador enfoca la arena al entrar. Si has cambiado de ventana, haz clic sobre ella para recuperar el control. El vehículo se detiene al perder el foco.
+
+Esta opción es una herramienta de demostración; no sustituye la prueba multijugador con cuatro personas.
+
+## Cómo jugar con amigos
 
 1. Escribe tu nombre, elige un vehículo y entra a una sala.
 2. Los otros tres jugadores usan **el mismo código de sala** y eligen los vehículos restantes. Puedes copiar el enlace de invitación.
@@ -50,7 +68,7 @@ El servidor escucha en `0.0.0.0`. Permite conexiones entrantes de Erlang si macO
 
 ### Probar en una computadora
 
-Abre cuatro pestañas con el mismo enlace. Escribe cuatro nombres, elige cuatro vehículos y marca listo en todas. Controlas la pestaña activa; al cambiar de ventana, el carro deja de moverse y disparar. No hay bots: las cuatro conexiones representan jugadores reales.
+Abre cuatro pestañas con el mismo enlace. Escribe cuatro nombres, elige cuatro vehículos y marca listo en todas. Controlas la pestaña activa; al cambiar de ventana, el carro deja de moverse y disparar. En este modo las cuatro conexiones representan jugadores reales. Para revisar movimiento sin abrir otras pestañas, usa Probar movimiento.
 
 ## Vehículos
 
@@ -111,7 +129,7 @@ priv/static/
 - Recargar equivale a salir: no se recupera el vehículo anterior. Se puede entrar cuando la sala vuelva al lobby o usar otro código.
 - Reiniciar Elixir borra las salas. Si el actor de sala termina inesperadamente, los clientes reciben un aviso y pueden recargar.
 - Hasta 32 salas, cuatro pilotos por sala. Es un proyecto académico para demostración local/LAN; no incluye cuentas ni matchmaking público.
-- Un mapa, paredes indestructibles, cuatro vehículos y un tipo de proyectil. Sin habilidades especiales, enemigos automáticos ni recursos extraídos de otras franquicias.
+- Un mapa, paredes indestructibles, cuatro vehículos y un tipo de proyectil. Sin bots, objetos de mejora, armas adicionales ni recursos extraídos de otras franquicias. Estas mejoras quedan fuera del Avance II.
 
 ## Verificar
 
@@ -132,7 +150,18 @@ npm run test:e2e
 
 Las pruebas de red requieren Node.js 22 o superior. Puedes utilizar otro puerto con `ARENA_URL=http://127.0.0.1:4100 npm run test:network`. Playwright se configura para el puerto 4000.
 
-Se comprueban exclusividad, quinta conexión, cuenta atrás, paredes y carros, cadencia, daño, eliminación simultánea, empate, victoria, controles caducados, cuatro estados idénticos, mensajes inválidos, desconexiones y revancha. Las capturas se guardan en `test-results/`.
+Se comprueban exclusividad, quinta conexión, cuenta atrás, paredes y carros, cadencia, daño, eliminación simultánea, empate, victoria, controles caducados, cuatro estados idénticos, mensajes inválidos, desconexiones, revancha y prueba individual de movimiento con WASD. Las capturas se guardan en `test-results/`.
+
+## Regenerar los documentos
+
+Los PDFs incluyen fuentes Markdown editables en docs/entrega. Para regenerarlos con el script se necesita Python, reportlab y Pillow, solo para documentación:
+
+```sh
+python -m pip install reportlab pillow
+python scripts/generar_documentos.py
+```
+
+El script utiliza Trebuchet si está instalada en macOS; en otros sistemas utiliza Helvetica. El juego no necesita estas dependencias de Python.
 
 ## Documentación técnica consultada
 

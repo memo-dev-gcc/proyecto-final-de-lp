@@ -41,6 +41,25 @@ defmodule Arena.PartidaTest do
     assert_receive {:DOWN, ^ref, :process, ^sala, :normal}, 1000
   end
 
+  test "prueba individual tiene un jugador, no termina por soledad y limpia su sala al salir" do
+    sala = start_supervised!({Partida, [sala: "SOLO", automatico: false]})
+    actor = spawn(fn -> Process.sleep(:infinity) end)
+    assert :ok = Partida.entrar(sala, actor, "humano", "Memo", "rayo")
+    assert :ok = Partida.practica(sala, "humano")
+    assert Partida.estado(sala).modo == "practica"
+    assert Partida.estado(sala).fase == "jugando"
+    assert length(Partida.estado(sala).jugadores) == 1
+    Partida.input(sala, "humano", "derecha", false)
+    send(sala, :tick)
+    assert hd(Partida.estado(sala).jugadores).x > 100
+    for _ <- 1..5500, do: send(sala, :tick)
+    assert Partida.estado(sala).fase == "jugando"
+    assert Partida.estado(sala).resultado == nil
+    ref = Process.monitor(sala)
+    Process.exit(actor, :kill)
+    assert_receive {:DOWN, ^ref, :process, ^sala, :normal}, 1000
+  end
+
   defp assert_eventually(comprobar, intentos \\ 30)
   defp assert_eventually(comprobar, 0), do: assert(comprobar.())
 

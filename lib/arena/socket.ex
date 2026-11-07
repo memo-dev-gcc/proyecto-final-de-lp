@@ -42,6 +42,23 @@ defmodule Arena.Socket do
   def handle_in(_, estado), do: error("Usa mensajes de texto JSON.", estado)
 
   defp procesar(
+         %{"tipo" => "practica", "nombre" => nombre, "personaje" => personaje},
+         %{partida: nil} = estado
+       ) do
+    codigo = Base.encode16(:crypto.strong_rand_bytes(4))
+
+    with {:ok, partida, sala} <- Arena.Salas.obtener(codigo),
+         :ok <- Arena.Partida.entrar(partida, self(), estado.id, nombre, personaje),
+         :ok <- Arena.Partida.practica(partida, estado.id) do
+      Process.monitor(partida)
+      nuevo = %{estado | partida: partida, sala: sala}
+      {:push, {:text, Jason.encode!(%{tipo: "dentro", player_id: estado.id, sala: sala})}, nuevo}
+    else
+      {:error, texto} -> error(texto, estado)
+    end
+  end
+
+  defp procesar(
          %{"tipo" => "entrar", "nombre" => nombre, "personaje" => personaje, "sala" => codigo},
          %{partida: nil} = estado
        ) do

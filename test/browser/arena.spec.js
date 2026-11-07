@@ -65,3 +65,26 @@ test('la arena completa cabe en una pantalla de escritorio', async ({page}) => {
   const caja = await page.locator('.battle-stage').boundingBox();
   expect(caja.y + caja.height).toBeLessThanOrEqual(900);
 });
+
+test('prueba individual sin bots permite WASD y salir al menú', async ({page}) => {
+  let estado;
+  page.on('websocket', ws=>ws.on('framereceived',({payload})=>{const m=JSON.parse(payload);if(m.tipo==='estado')estado=m.estado}));
+  await page.goto('/');
+  await expect(page.locator('#conexion')).toHaveText('Conectado');
+  await page.getByRole('button',{name:'Probar movimiento',exact:true}).click();
+  await expect(page.locator('#fase-label')).toHaveText('Prueba de movimiento');
+  await expect(page.locator('#arena')).toBeFocused();
+  expect(estado.jugadores).toHaveLength(1);
+  for(const [tecla,eje,signo] of [['d','x',1],['a','x',-1],['s','y',1],['w','y',-1]]){
+    const antes=estado.jugadores[0][eje];
+    await page.keyboard.down(tecla);
+    await expect.poll(()=>signo*(estado.jugadores[0][eje]-antes)).toBeGreaterThan(0);
+    await page.keyboard.up(tecla);
+  }
+  await expect(page.locator('#timer')).toHaveText('Libre');
+  await page.screenshot({path:'test-results/practica.png',fullPage:true});
+  await page.locator('#exit-practice-btn').click();
+  await expect(page.locator('#join-form')).toBeVisible();
+  await expect(page.locator('#fase-label')).toHaveText('Elige tu vehículo');
+  await expect(page).not.toHaveURL(/practica=1/);
+});

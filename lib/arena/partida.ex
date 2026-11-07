@@ -17,12 +17,15 @@ defmodule Arena.Partida do
   def input(pid, id, direccion, disparar),
     do: GenServer.cast(pid, {:input, id, direccion, disparar})
 
+  def practica(pid, id), do: GenServer.call(pid, {:practica, id})
+
   def estado(pid), do: GenServer.call(pid, :estado)
   @impl true
   def init(opts) do
     automatico = Keyword.get(opts, :automatico, true)
     if automatico, do: Process.send_after(self(), :tick, @tick_ms)
     Process.send_after(self(), :limpiar, 15_000)
+
     {:ok, %{juego: Reglas.nueva(), clientes: %{}, sala: opts[:sala], automatico: automatico}}
   end
 
@@ -46,6 +49,17 @@ defmodule Arena.Partida do
     end
   end
 
+  def handle_call({:practica, id}, _from, estado) do
+    if estado.juego.fase == "lobby" and map_size(estado.clientes) == 1 and
+         Map.has_key?(estado.clientes, id) do
+      nuevo = %{estado | juego: %{estado.juego | fase: "jugando", modo: "practica"}}
+      publicar(nuevo)
+      {:reply, :ok, nuevo}
+    else
+      {:reply, {:error, "La prueba necesita una sala privada con un solo jugador."}, estado}
+    end
+  end
+
   def handle_call({:accion, id, mensaje}, _from, estado) do
     case Reglas.accion(estado.juego, id, mensaje) do
       {:ok, juego} ->
@@ -58,7 +72,7 @@ defmodule Arena.Partida do
     end
   end
 
-  def handle_call(:estado, _from, estado), do: {:reply, Reglas.snapshot(estado.juego), estado}
+  def handle_call(:estado, _from, estado), do: {:reply, vista(estado), estado}
   @impl true
   def handle_cast({:input, id, direccion, disparar}, estado),
     do: {:noreply, %{estado | juego: Reglas.input(estado.juego, id, direccion, disparar)}}
@@ -101,9 +115,11 @@ defmodule Arena.Partida do
   def handle_info(:limpiar, estado), do: {:noreply, estado}
   def handle_info(_, estado), do: {:noreply, estado}
 
+  defp vista(estado), do: Reglas.snapshot(estado.juego)
+
   defp publicar(estado) do
     json =
-      Jason.encode!(%{tipo: "estado", sala: estado.sala, estado: Reglas.snapshot(estado.juego)})
+      Jason.encode!(%{tipo: "estado", sala: estado.sala, estado: vista(estado)})
 
     for {_, {socket_pid, _}} <- estado.clientes, do: send(socket_pid, {:snapshot, json})
   end
